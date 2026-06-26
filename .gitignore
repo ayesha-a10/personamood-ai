@@ -1,6 +1,29 @@
+# Virtual Environment
 venv/
+
+# Python Cache
 __pycache__/
+*.py[cod]
+
+# Jupyter
 .ipynb_checkpoints/
 
-*.pyc
+# Environment Variables
 .env
+
+# Model Cache
+.cache/
+huggingface/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Pytest
+.pytest_cache/
+
+# Logs
+*.log

@@ -1,0 +1,36 @@
+# Core
+numpy
+pandas
+scikit-learn
+joblib
+
+# NLP
+transformers
+torch
+tokenizers
+
+# OpenAI
+openai
+python-dotenv
+
+# API
+fastapi
+uvicorn
+
+# Frontend
+streamlit
+requests
+
+# Visualization
+matplotlib
+
+# Utilities
+tqdm
+
+# Notebook (Development)
+jupyter
+notebook
+ipykernel
+
+# Testing
+pytest
