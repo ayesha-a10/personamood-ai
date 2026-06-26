@@ -142,7 +142,6 @@ personamood-ai/
 │   └── utils.py
 │
 ├── tests/
-│   └── test_chatbot.py
 │
 ├── requirements.txt
 ├── .gitignore
@@ -309,6 +308,14 @@ streamlit run app/streamlit_app.py
 - User Authentication
 - Docker Deployment
 - Cloud Deployment
+
+---
+
+# License
+
+This project is licensed under the **MIT License**.
+
+See the `LICENSE` file for details.
 
 ---
 
