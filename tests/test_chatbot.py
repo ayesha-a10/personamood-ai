@@ -1,4 +1,4 @@
-from chatbot import PersonaMoodChatbot
+from src.chatbot import PersonaMoodChatbot
 
 bot = PersonaMoodChatbot()
 
