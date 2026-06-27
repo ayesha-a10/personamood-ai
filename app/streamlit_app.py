@@ -1,19 +1,28 @@
 """
 PersonaMood-AI Streamlit Frontend
+Single Deployment Version
 """
 
+import sys
+from pathlib import Path
+
 import streamlit as st
-import requests
 
-# ==========================================================
-# Configuration
-# ==========================================================
+# ----------------------------------------------------
+# Import chatbot
+# ----------------------------------------------------
 
-BASE_URL = "https://personamood-api.onrender.com"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+SRC_PATH = PROJECT_ROOT / "src"
 
-CHAT_URL = f"{BASE_URL}/chat"
-CLEAR_URL = f"{BASE_URL}/clear"
-HEALTH_URL = f"{BASE_URL}/health"
+if str(SRC_PATH) not in sys.path:
+    sys.path.append(str(SRC_PATH))
+
+from chatbot import PersonaMoodChatbot
+
+# ----------------------------------------------------
+# Streamlit Config
+# ----------------------------------------------------
 
 st.set_page_config(
     page_title="PersonaMood-AI",
@@ -21,67 +30,51 @@ st.set_page_config(
     layout="wide"
 )
 
-# ==========================================================
+# ----------------------------------------------------
+# Session State
+# ----------------------------------------------------
+
+if "bot" not in st.session_state:
+    st.session_state.bot = PersonaMoodChatbot()
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# ----------------------------------------------------
 # Sidebar
-# ==========================================================
+# ----------------------------------------------------
 
 with st.sidebar:
 
     st.title("🧠 PersonaMood-AI")
 
-    st.markdown(
-        """
-An AI assistant that adapts responses using
+    st.markdown("""
+### AI Features
 
 - Personality Detection
 - Mood Detection
 - Prompt Engineering
-- GPT
-"""
-    )
-
-    st.divider()
+- GPT Response Generation
+""")
 
     developer_mode = st.toggle(
         "Developer Mode",
         value=False
     )
 
-    st.divider()
-
-    try:
-
-        health = requests.get(HEALTH_URL).json()
-
-        st.success("Backend Connected")
-
-        st.caption(f"Model: {health['model']}")
-
-    except Exception:
-
-        st.error("Backend Offline")
-
-    st.divider()
+    st.success("🟢 Chatbot Ready")
 
     if st.button("🗑 Clear Conversation"):
 
-        requests.post(CLEAR_URL)
+        st.session_state.bot.clear_memory()
 
         st.session_state.messages = []
 
         st.rerun()
 
-# ==========================================================
-# Session State
-# ==========================================================
-
-if "messages" not in st.session_state:
-
-    st.session_state.messages = []
-
-# ==========================================================
-# Title
-# ==========================================================
+# ----------------------------------------------------
+# Main Page
+# ----------------------------------------------------
 
 st.title("🧠 PersonaMood-AI")
 
@@ -89,9 +82,9 @@ st.caption(
     "Adaptive AI Chatbot powered by Personality + Mood Detection"
 )
 
-# ==========================================================
-# Display Chat History
-# ==========================================================
+# ----------------------------------------------------
+# Previous Messages
+# ----------------------------------------------------
 
 for msg in st.session_state.messages:
 
@@ -99,117 +92,90 @@ for msg in st.session_state.messages:
 
         st.markdown(msg["content"])
 
-        if developer_mode and msg["role"] == "assistant":
+        if (
+            developer_mode
+            and msg["role"] == "assistant"
+            and "debug" in msg
+        ):
 
-            if "debug" in msg:
+            with st.expander("Developer Insights"):
 
-                with st.expander("Developer Insights"):
+                st.write("Detected Mood")
 
-                    st.write("Mood")
+                st.success(msg["debug"]["mood"])
 
-                    st.success(msg["debug"]["mood"])
+                st.write("Detected Personality")
 
-                    st.write("Personality")
+                st.json(msg["debug"]["personality"])
 
-                    st.json(msg["debug"]["personality"])
-
-# ==========================================================
+# ----------------------------------------------------
 # Chat Input
-# ==========================================================
+# ----------------------------------------------------
 
-user_input = st.chat_input(
-    "Type your message..."
-)
+prompt = st.chat_input("Type your message...")
 
-if user_input:
+if prompt:
 
     st.session_state.messages.append(
-
         {
-
             "role": "user",
-
-            "content": user_input
-
+            "content": prompt
         }
-
     )
 
     with st.chat_message("user"):
-
-        st.markdown(user_input)
+        st.markdown(prompt)
 
     with st.spinner("Thinking..."):
 
-        response = requests.post(
+        try:
 
-            CHAT_URL,
+            result = st.session_state.bot.chat(prompt)
 
-            json={
+            assistant = result["response"]
 
-                "message": user_input
+            mood = result["mood"]
 
-            }
+            personality = result["personality"]
 
-        )
+        except Exception as e:
 
-    if response.status_code == 200:
+            assistant = f"❌ {str(e)}"
 
-        result = response.json()
+            mood = "unknown"
 
-        assistant_text = result["response"]
-
-        personality = result["personality"]
-
-        mood = result["mood"]
-
-    else:
-
-        assistant_text = "Backend Error"
-
-        personality = {}
-
-        mood = "unknown"
+            personality = {}
 
     with st.chat_message("assistant"):
 
-        st.markdown(assistant_text)
+        st.markdown(assistant)
 
         if developer_mode:
 
             with st.expander("Developer Insights"):
 
-                st.write("Mood")
+                st.write("Detected Mood")
 
                 st.success(mood)
 
-                st.write("Personality")
+                st.write("Detected Personality")
 
                 st.json(personality)
 
     st.session_state.messages.append(
-
         {
-
             "role": "assistant",
-
-            "content": assistant_text,
-
+            "content": assistant,
             "debug": {
-
-                "personality": personality,
-
-                "mood": mood
-
+                "mood": mood,
+                "personality": personality
             }
-
         }
-
     )
 
-# ==========================================================
+# ----------------------------------------------------
 # Download Conversation
-# ==========================================================
+# ----------------------------------------------------
 
 st.divider()
 
@@ -217,18 +183,14 @@ conversation = ""
 
 for msg in st.session_state.messages:
 
-    conversation += f"{msg['role'].upper()}:\n"
-
-    conversation += msg["content"]
-
-    conversation += "\n\n"
+    conversation += (
+        f"{msg['role'].upper()}:\n"
+        f"{msg['content']}\n\n"
+    )
 
 st.download_button(
-
     "📥 Download Conversation",
-
     conversation,
-
-    file_name="conversation.txt"
-
+    file_name="conversation.txt",
+    mime="text/plain"
 )
