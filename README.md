@@ -306,8 +306,6 @@ streamlit run app/streamlit_app.py
 - Voice Input and Output
 - Multi-language Support
 - User Authentication
-- Docker Deployment
-- Cloud Deployment
 
 ---
 
