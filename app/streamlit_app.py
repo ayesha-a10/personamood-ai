@@ -9,7 +9,7 @@ import requests
 # Configuration
 # ==========================================================
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "https://personamood-api.onrender.com"
 
 CHAT_URL = f"{BASE_URL}/chat"
 CLEAR_URL = f"{BASE_URL}/clear"
